@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulator & Manajemen Lele Bioflok per Ember</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    min-height: 100vh;
+    padding: 20px;
+    color: #e0e0e0;
+  }
+  .container { max-width: 1150px; margin: 0 auto; }
+
+  header {
+    text-align: center; margin-bottom: 25px; padding: 25px;
+    background: rgba(255,255,255,0.05); border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+  }
+  header h1 {
+    font-size: 2em;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 8px;
+  }
+  header p { color: #a0aec0; font-size: 0.95em; }
+
+  /* TABS */
+  .tabs {
+    display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .tab {
+    padding: 12px 20px; border-radius: 12px 12px 0 0;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-bottom: none; cursor: pointer; font-size: 0.92em;
+    color: #a0aec0; white-space: nowrap; transition: 0.2s;
+    font-weight: 500;
+  }
+  .tab:hover { background: rgba(255,255,255,0.08); color: #e0e0e0; }
+  .tab.active {
+    background: rgba(79,172,254,0.15);
+    color: #4facfe; font-weight: 700;
+    border-color: rgba(79,172,254,0.4);
+  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: rgba(255,255,255,0.05); border-radius: 16px;
+    padding: 22px; border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px); margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .card h2 {
+    font-size: 1.15em; color: #4facfe; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+    padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    justify-content: space-between;
+  }
+  .card h2 .icon { font-size: 1.3em; margin-right: 4px; }
+  .card h2 .left { display: flex; align-items: center; gap: 8px; }
+
+  .input-group { margin-bottom: 14px; }
+  .input-group label {
+    display: block; font-size: 0.88em; color: #a0aec0; margin-bottom: 6px;
+  }
+  .input-group input, .input-group select, .input-group textarea {
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.3); color: #fff;
+    font-size: 1em; outline: none; transition: 0.2s;
+    font-family: inherit;
+  }
+  .input-group textarea { resize: vertical; min-height: 60px; }
+  .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+    border-color: #4facfe; box-shadow: 0 0 0 3px rgba(79,172,254,0.2);
+  }
+  .input-group small {
+    color: #718096; font-size: 0.78em; display: block; margin-top: 4px;
+  }
+
+  button {
+    padding: 12px 18px; border-radius: 10px; border: none;
+    font-size: 0.95em; font-weight: 600; cursor: pointer;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    color: #0f2027; transition: 0.2s;
+  }
+  button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79,172,254,0.4); }
+  button.secondary {
+    background: rgba(255,255,255,0.1); color: #e0e0e0;
+  }
+  button.danger {
+    background: rgba(245,101,101,0.2); color: #f56565;
+    border: 1px solid rgba(245,101,101,0.3);
+  }
+  button.success {
+    background: linear-gradient(90deg, #48bb78, #38a169);
+    color: #fff;
+  }
+  button.warn {
+    background: linear-gradient(90deg, #f6ad55, #ed8936);
+    color: #fff;
+  }
+  button.full { width: 100%; }
+  button.sm { padding: 6px 12px; font-size: 0.82em; }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+
+  .result-item {
+    display: flex; justify-content: space-between; padding: 10px 0;
+    border-bottom: 1px dashed rgba(255,255,255,0.1); font-size: 0.95em;
+  }
+  .result-item:last-child { border-bottom: none; }
+  .result-item .label { color: #a0aec0; }
+  .result-item .value { font-weight: 700; color: #4facfe; }
+  .result-item .value.big { font-size: 1.2em; color: #00f2fe; }
+  .result-item .value.warn { color: #f6ad55; }
+  .result-item .value.good { color: #48bb78; }
+
+  table {
+    width: 100%; border-collapse: collapse; font-size: 0.85em; margin-top: 10px;
+  }
+  table th {
+    background: rgba(79,172,254,0.15); color: #4facfe;
+    padding: 10px 6px; text-align: left; font-weight: 600;
+    font-size: 0.85em; position: sticky; top: 0;
+  }
+  table th:first-child { border-radius: 8px 0 0 0; }
+  table th:last-child { border-radius: 0 8px 0 0; }
+  table td { padding: 9px 6px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  table tr:hover td { background: rgba(255,255,255,0.03); }
+
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(79,172,254,0.15), rgba(0,242,254,0.08));
+    border: 1px solid rgba(79,172,254,0.3);
+    border-radius: 12px; padding: 14px; margin-bottom: 12px;
+  }
+  .highlight-box .title { font-size: 0.82em; color: #a0aec0; margin-bottom: 4px; }
+  .highlight-box .num {
+    font-size: 1.5em; font-weight: 700;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .badge {
+    display: inline-block; padding: 3px 9px; border-radius: 20px;
+    font-size: 0.72em; font-weight: 600;
+  }
+  .badge.ok { background: rgba(72,187,120,0.2); color: #48bb78; }
+  .badge.warn { background: rgba(246,173,85,0.2); color: #f6ad55; }
+  .badge.bad { background: rgba(245,101,101,0.2); color: #f56565; }
+
+  .note {
+    background: rgba(246,173,85,0.1); border-left: 3px solid #f6ad55;
+    padding: 10px 14px; border-radius: 8px; font-size: 0.85em;
+    color: #fbd38d; margin-top: 12px;
+  }
+  .note.info {
+    background: rgba(79,172,254,0.1); border-left-color: #4facfe; color: #bee3f8;
+  }
+  .note.success {
+    background: rgba(72,187,120,0.1); border-left-color: #48bb78; color: #c6f6d5;
+  }
+
+  .row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px; }
+  @media (max-width: 600px) { .row-3 { grid-template-columns: 1fr; } }
+  .stat-box {
+    background: rgba(0,0,0,0.25); border-radius: 12px; padding: 14px;
+    text-align: center; border: 1px solid rgba(255,255,255,0.08);
+  }
+  .stat-box .label { font-size: 0.75em; color: #a0aec0; margin-bottom: 6px; }
+  .stat-box .val { font-size: 1.3em; font-weight: 700; color: #4facfe; }
+
+  .log-entry {
+    background: rgba(0,0,0,0.2); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 10px;
+    border-left: 3px solid #4facfe;
+    font-size: 0.9em;
+  }
+  .log-entry .log-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 6px; flex-wrap: wrap; gap: 6px;
+  }
+  .log-entry .log-date { font-weight: 700; color: #4facfe; font-size: 0.92em; }
+  .log-entry .log-detail { color: #a0aec0; font-size: 0.85em; line-height: 1.6; }
+  .log-entry .log-note { color: #e0e0e0; margin-top: 6px; font-style: italic; }
+
+  .sample-entry {
+    background: rgba(0,0,0,0.2); border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 10px;
+    border-left: 3px solid #48bb78;
+    font-size: 0.9em;
+  }
+
+  .progress-bar {
+    width: 100%; height: 8px; background: rgba(0,0,0,0.3);
+    border-radius: 4px; overflow: hidden; margin-top: 8px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    border-radius: 4px; transition: width 0.5s;
+  }
+
+  .empty-state {
+    text-align: center; padding: 30px; color: #718096;
+    font-size: 0.9em;
+  }
+  .empty-state .big { font-size: 2.5em; margin-bottom: 8px; opacity: 0.5; }
+
+  footer {
+    text-align: center; padding: 20px; color: #718096; font-size: 0.82em;
+  }
+
+  /* PRINT STYLES */
+  @media print {
+    body { background: #fff; color: #000; padding: 10px; }
+    .tabs, button, header p { display: none !important; }
+    .card {
+      background: #fff; border: 1px solid #ccc;
+      box-shadow: none; page-break-inside: avoid;
+    }
+    .card h2 { color: #000; border-bottom: 1px solid #ccc; }
+    .result-item .value, .stat-box .val { color: #000 !important; -webkit-text-fill-color: #000 !important; }
+    .highlight-box { background: #f0f0f0; border-color: #ccc; }
+    .highlight-box .num { color: #000; -webkit-text-fill-color: #000; }
+    table th { background: #eee; color: #000; }
+    .tab-content { display: block !important; }
+    .tab-content:not(.active) { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>🐟 Manajemen Lele Bioflok per Ember</h1>
+    <p>Kalkulator padat tebar, pakan, molase, log harian & tracking sampling</p>
+  </header>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('kalkulator', this)">🧮 Kalkulator</div>
+    <div class="tab" onclick="switchTab('log', this)">📝 Log Harian</div>
+    <div class="tab" onclick="switchTab('sampling', this)">📏 Tracking Sampling</div>
+    <div class="tab" onclick="switchTab('air', this)">🌊 Kualitas Air</div>
+    <div class="tab" onclick="switchTab('tips', this)">💡 Tips</div>
+  </div>
+
+  <!-- ============ TAB KALKULATOR ============ -->
+  <div id="tab-kalkulator" class="tab-content active">
+    <div class="grid">
+      <div class="card">
+        <h2><span class="left"><span class="icon">⚙️</span> Parameter Budidaya</span></h2>
+
+        <div class="input-group">
+          <label>Jumlah Ember</label>
+          <input type="number" id="jmlEmber" value="1" min="1">
+        </div>
+        <div class="input-group">
+          <label>Volume Air per Ember (liter)</label>
+          <input type="number" id="volEmber" value="70" min="10" max="200">
+          <small>Ember 80 L biasanya diisi 60–70 L air efektif</small>
+        </div>
+        <div class="input-group">
+          <label>Tingkat Pengelolaan</label>
+          <select id="level">
+            <option value="30">Konservatif (30 ekor/ember)</option>
+            <option value="50" selected>Menengah (50 ekor/ember)</option>
+            <option value="60">Intensif (60 ekor/ember)</option>
+            <option value="80">Super Intensif (80 ekor/ember)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Bobot Awal Benih (gram/ekor)</label>
+          <input type="number" id="bobotAwal" value="5" min="1" step="0.5">
+        </div>
+        <div class="input-group">
+          <label>Target Bobot Panen (gram/ekor)</label>
+          <input type="number" id="bobotAkhir" value="100" min="20" step="5">
+        </div>
+        <div class="input-group">
+          <label>Survival Rate (%)</label>
+          <input type="number" id="sr" value="90" min="50" max="100" step="1">
+        </div>
+        <div class="input-group">
+          <label>Harga Pakan per kg (Rp)</label>
+          <input type="number" id="hargaPakan" value="10000" min="1000" step="500">
+        </div>
+        <div class="input-group">
+          <label>Harga Jual Lele per kg (Rp)</label>
+          <input type="number" id="hargaJual" value="25000" min="1000" step="500">
+        </div>
+
+        <button class="full" onclick="hitung()">🧮 Hitung Sekarang</button>
+      </div>
+
+      <div class="card">
+        <h2><span class="left"><span class="icon">📊</span> Ringkasan Hasil</span></h2>
+
+        <div class="row-3">
+          <div class="stat-box">
+            <div class="label">Total Benih</div>
+            <div class="val" id="rBenih">-</div>
+          </div>
+          <div class="stat-box">
+            <div class="label">Biomassa Panen</div>
+            <div class="val" id="rBiomassa">-</div>
+          </div>
+          <div class="stat-box">
+            <div class="label">Total Pakan</div>
+            <div class="val" id="rPakan">-</div>
+          </div>
+        </div>
+
+        <div class="result-item"><span class="label">Jumlah Ember</span><span class="value" id="rEmber">-</span></div>
+        <div class="result-item"><span class="label">Padat Tebar / Ember</span><span class="value" id="rPadat">-</span></div>
+        <div class="result-item"><span class="label">Biomassa Awal</span><span class="value" id="rBioAwal">-</span></div>
+        <div class="result-item"><span class="label">Pertambahan Biomassa</span><span class="value" id="rPertam">-</span></div>
+        <div class="result-item"><span class="label">FCR (Bioflok)</span><span class="value good" id="rFCR">-</span></div>
+        <div class="result-item"><span class="label">Total Pakan Dibutuhkan</span><span class="value big" id="rTotalPakan">-</span></div>
+        <div class="result-item"><span class="label">Biaya Pakan</span><span class="value warn" id="rBiayaPakan">-</span></div>
+        <div class="result-item"><span class="label">Estimasi Pendapatan</span><span class="value good" id="rPendapatan">-</span></div>
+        <div class="result-item"><span class="label">Margin Kotor</span><span class="value" id="rMargin">-</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>
+        <span class="left"><span class="icon">📅</span> Jadwal Pakan Mingguan (per Ember)</span>
+        <button class="sm secondary" onclick="exportJadwalCSV()">📥 Export CSV</button>
+      </h2>
+      <div id="jadwalContainer">
+        <p style="color:#a0aec0; font-size:0.9em;">Klik <b>Hitung Sekarang</b> untuk melihat jadwal pakan.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="left"><span class="icon">🧪</span> Molase & Perawatan Bioflok</span></h2>
+      <div class="grid" style="grid-template-columns: 1fr 1fr; margin-bottom:0;">
+        <div>
+          <div class="highlight-box">
+            <div class="title">Dosis Molase Awal (Starter)</div>
+            <div class="num" id="molaseAwal">-</div>
+          </div>
+          <div class="highlight-box">
+            <div class="title">Molase Harian (Perawatan)</div>
+            <div class="num" id="molaseHarian">-</div>
+          </div>
+          <div class="highlight-box">
+            <div class="title">Total Molase 1 Siklus (60 hari)</div>
+            <div class="num" id="molaseTotal">-</div>
+          </div>
+        </div>
+        <div>
+          <p style="font-size:0.9em; line-height:1.6; color:#a0aec0; margin-bottom:12px;">
+            <b style="color:#4facfe;">Cara pakai molase:</b><br>
+            1. Larutkan molase dalam air ember, aduk rata.<br>
+            2. Tuang merata ke permukaan air.<br>
+            3. Aerasi <b>24 jam non-stop</b>.<br>
+            4. Cek volume flok tiap 3 hari (target 20–80 ml/L).<br>
+            5. Jika flok >80 ml/L, buang endapan 10–20%.<br>
+            6. Jika air bau busuk, tambah molase dan aerasi.
+          </p>
+          <div class="note">⚠️ <b>Penting:</b> Aerasi wajib 24 jam. Jika listrik mati >2 jam, risiko flok mati dan amonia melonjak.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB LOG HARIAN ============ -->
+  <div id="tab-log" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2><span class="left"><span class="icon">📝</span> Tambah Log Harian</span></h2>
+        <div class="input-group">
+          <label>Tanggal</label>
+          <input type="date" id="logTanggal">
+        </div>
+        <div class="input-group">
+          <label>Umur Budidaya (hari)</label>
+          <input type="number" id="logHari" value="1" min="1">
+        </div>
+        <div class="input-group">
+          <label>Pakan Diberikan (gram)</label>
+          <input type="number" id="logPakan" value="0" min="0" step="5">
+        </div>
+        <div class="input-group">
+          <label>pH Air</label>
+          <input type="number" id="logPH" value="7" min="1" max="14" step="0.1">
+        </div>
+        <div class="input-group">
+          <label>Suhu Air (°C)</label>
+          <input type="number" id="logSuhu" value="28" min="15" max="40" step="0.5">
+        </div>
+        <div class="input-group">
+          <label>Volume Flok (ml/L)</label>
+          <input type="number" id="logFlok" value="30" min="0" max="200" step="5">
+        </div>
+        <div class="input-group">
+          <label>Jumlah Ikan Mati (ekor)</label>
+          <input type="number" id="logMati" value="0" min="0">
+        </div>
+        <div class="input-group">
+          <label>Catatan</label>
+          <textarea id="logCatatan" placeholder="Misal: ganti air 20%, tambah molase 10g..."></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="success" onclick="simpanLog()">💾 Simpan Log</button>
+          <button class="secondary" onclick="clearFormLog()">🔄 Reset Form</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>
+          <span class="left"><span class="icon">📋</span> Riwayat Log (<span id="logCount">0</span>)</span>
+          <div style="display:flex; gap:6px;">
+            <button class="sm secondary" onclick="exportLogCSV()">📥 CSV</button>
+            <button class="sm danger" onclick="hapusSemuaLog()">🗑️ Hapus</button>
+          </div>
+        </h2>
+        <div id="logList" style="max-height:600px; overflow-y:auto;">
+          <div class="empty-state">
+            <div class="big">📝</div>
+            Belum ada log. Tambahkan log harian pertama Anda.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="left"><span class="icon">📈</span> Statistik Log</span></h2>
+      <div class="row-3">
+        <div class="stat-box">
+          <div class="label">Total Pakan (log)</div>
+          <div class="val" id="statPakan">0 g</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Total Ikan Mati</div>
+          <div class="val" id="statMati">0 ekor</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Rata-rata pH</div>
+          <div class="val" id="statPH">-</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB SAMPLING ============ -->
+  <div id="tab-sampling" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2><span class="left"><span class="icon">📏</span> Tambah Data Sampling</span></h2>
+        <div class="input-group">
+          <label>Tanggal Sampling</label>
+          <input type="date" id="sampTanggal">
+        </div>
+        <div class="input-group">
+          <label>Umur Budidaya (hari)</label>
+          <input type="number" id="sampHari" value="10" min="1">
+        </div>
+        <div class="input-group">
+          <label>Jumlah Sampel (ekor)</label>
+          <input type="number" id="sampJumlah" value="10" min="1">
+        </div>
+        <div class="input-group">
+          <label>Total Berat Sampel (gram)</label>
+          <input type="number" id="sampBerat" value="100" min="1" step="1">
+          <small>Akan dihitung otomatis bobot rata-rata</small>
+        </div>
+        <div class="input-group">
+          <label>Perkiraan Populasi Hidup (ekor)</label>
+          <input type="number" id="sampPopulasi" value="45" min="0">
+          <small>Dari hitung manual atau estimasi</small>
+        </div>
+        <div class="input-group">
+          <label>Catatan</label>
+          <textarea id="sampCatatan" placeholder="Kondisi ikan, nafsu makan, dll..."></textarea>
+        </div>
+        <button class="success full" onclick="simpanSampling()">💾 Simpan Sampling</button>
+      </div>
+
+      <div class="card">
+        <h2>
+          <span class="left"><span class="icon">📊</span> Riwayat Sampling (<span id="sampCount">0</span>)</span>
+          <div style="display:flex; gap:6px;">
+            <button class="sm secondary" onclick="exportSamplingCSV()">📥 CSV</button>
+            <button class="sm danger" onclick="hapusSemuaSampling()">🗑️ Hapus</button>
+          </div>
+        </h2>
+        <div id="sampList" style="max-height:600px; overflow-y:auto;">
+          <div class="empty-state">
+            <div class="big">📏</div>
+            Belum ada data sampling.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="left"><span class="icon">📉</span> Grafik Pertumbuhan</span></h2>
+      <div id="chartSampling" class="empty-state">
+        <div class="big">📈</div>
+        Belum ada data untuk grafik.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB KUALITAS AIR ============ -->
+  <div id="tab-air" class="tab-content">
+    <div class="card">
+      <h2><span class="left"><span class="icon">🌊</span> Parameter Kualitas Air Ideal</span></h2>
+      <table>
+        <thead>
+          <tr><th>Parameter</th><th>Kisaran Ideal</th><th>Dampak Jika Menyimpang</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Suhu</td><td>26–30°C</td><td>Metabolisme turun, nafsu makan hilang</td></tr>
+          <tr><td>pH</td><td>6,5–8,0</td><td>pH <6 atau >9 stress berat</td></tr>
+          <tr><td>DO (Oksigen)</td><td>>4 mg/L</td><td>Lele naik ke permukaan, megap-megap</td></tr>
+          <tr><td>Amonia (NH₃)</td><td><0,1 mg/L</td><td>Toksik, insang rusak, kematian massal</td></tr>
+          <tr><td>Nitrit (NO₂)</td><td><0,05 mg/L</td><td>Darah tidak bisa angkut oksigen</td></tr>
+          <tr><td>Volume Flok</td><td>20–80 ml/L</td><td>>80 ml/L: oksigen turun; <20 ml/L: flok belum matang</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2><span class="left"><span class="icon">🧪</span> Cara Cek Volume Flok</span></h2>
+      <p style="font-size:0.92em; line-height:1.8; color:#a0aec0;">
+        1. Ambil 1 liter air dari dasar ember (sebelum aerasi dinyalakan).<br>
+        2. Tuang ke wadah transparan (botol/gelas ukur tinggi).<br>
+        3. Diamkan <b>30–60 menit</b>.<br>
+        4. Endapan flok akan mengendap di dasar.<br>
+        5. Ukur tinggi endapan. <b>1 ml endapan per liter air = 1 ml/L.</b><br>
+        6. Target: <b>20–80 ml/L</b>. Jika lebih, buang endapan via sipon.
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ TAB TIPS ============ -->
+  <div id="tab-tips" class="tab-content">
+    <div class="card">
+      <h2><span class="left"><span class="icon">💡</span> Tips Sukses Bioflok di Ember</span></h2>
+      <ul style="list-style:none; padding:0; line-height:2; font-size:0.9em;">
+        <li>✅ <b>Aerasi 24 jam non-stop</b> — kunci utama bioflok.</li>
+        <li>✅ <b>Sipon dasar ember 2× seminggu</b> — buang endapan, tambah air baru.</li>
+        <li>✅ <b>Bibis pakan dengan probiotik</b> — basahi pelet sebelum diberi.</li>
+        <li>✅ <b>Sortir setiap 2 minggu</b> — pisahkan lele besar & kecil.</li>
+        <li>✅ <b>Jangan overfeeding</b> — sisa pakan merusak kualitas air.</li>
+        <li>✅ <b>Ganti air 10–20%</b> jika flok terlalu padat atau air berbau.</li>
+        <li>✅ <b>Ukur flok dengan kerucut Imhoff</b> atau botol transparan.</li>
+        <li>✅ <b>Catat log harian</b> — biar tahu tren kualitas air dan pakan.</li>
+        <li>✅ <b>Sampling tiap 10 hari</b> — untuk pantau pertumbuhan & estimasi populasi.</li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>Dibuat untuk budidaya lele sistem bioflok skala rumahan 🐟</footer>
+</div>
+
+<script>
+/* ============ UTILS ============ */
+function formatRp(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+function formatNum(n, dec=2) { return Number(n).toLocaleString('id-ID', {maximumFractionDigits: dec}); }
+function todayISO() { return new Date().toISOString().split('T')[0]; }
+function load(key, def) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; }
+  catch(e) { return def; }
+}
+function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+/* ============ TABS ============ */
+function switchTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'log') renderLog();
+  if (id === 'sampling') { renderSampling(); renderChart(); }
+}
+
+/* ============ KALKULATOR ============ */
+function hitung() {
+  const jmlEmber   = parseInt(document.getElementById('jmlEmber').value) || 1;
+  const volEmber   = parseFloat(document.getElementById('volEmber').value) || 70;
+  const padat      = parseInt(document.getElementById('level').value) || 50;
+  const bobotAwal  = parseFloat(document.getElementById('bobotAwal').value) || 5;
+  const bobotAkhir = parseFloat(document.getElementById('bobotAkhir').value) || 100;
+  const sr         = (parseFloat(document.getElementById('sr').value) || 90) / 100;
+  const hargaPakan = parseFloat(document.getElementById('hargaPakan').value) || 10000;
+  const hargaJual  = parseFloat(document.getElementById('hargaJual').value) || 25000;
+
+  const totalBenih = padat * jmlEmber;
+  const totalHidup = Math.round(totalBenih * sr);
+
+  const bioAwalGram = totalBenih * bobotAwal;
+  const bioAkhirGram = totalHidup * bobotAkhir;
+  const pertamGram = bioAkhirGram - bioAwalGram;
+
+  const FCR = 0.9;
+  const totalPakanGram = pertamGram * FCR;
+  const totalPakanKg = totalPakanGram / 1000;
+
+  const biayaPakan = totalPakanKg * hargaPakan;
+  const pendapatan = (bioAkhirGram / 1000) * hargaJual;
+  const margin = pendapatan - biayaPakan;
+
+  document.getElementById('rBenih').textContent = totalBenih + ' ekor';
+  document.getElementById('rBiomassa').textContent = formatNum(bioAkhirGram/1000) + ' kg';
+  document.getElementById('rPakan').textContent = formatNum(totalPakanKg) + ' kg';
+  document.getElementById('rEmber').textContent = jmlEmber + ' ember (' + volEmber + ' L)';
+  document.getElementById('rPadat').textContent = padat + ' ekor/ember';
+  document.getElementById('rBioAwal').textContent = formatNum(bioAwalGram/1000) + ' kg';
+  document.getElementById('rPertam').textContent = formatNum(pertamGram/1000) + ' kg';
+  document.getElementById('rFCR').textContent = FCR;
+  document.getElementById('rTotalPakan').textContent = formatNum(totalPakanKg) + ' kg';
+  document.getElementById('rBiayaPakan').textContent = formatRp(biayaPakan);
+  document.getElementById('rPendapatan').textContent = formatRp(pendapatan);
+  document.getElementById('rMargin').textContent = formatRp(margin);
+  document.getElementById('rMargin').className = 'value ' + (margin > 0 ? 'good' : 'warn');
+
+  // Jadwal
+  window._jadwalData = buatJadwal(jmlEmber, totalBenih, bobotAwal, bobotAkhir);
+
+  // Molase
+  const totalAir = jmlEmber * volEmber;
+  const molaseAwal = totalAir * 0.4;
+  const molaseHarian = totalAir * 0.15;
+  const molaseTotal = molaseAwal + (molaseHarian * 60);
+  document.getElementById('molaseAwal').textContent = formatNum(molaseAwal, 1) + ' gram';
+  document.getElementById('molaseHarian').textContent = formatNum(molaseHarian, 1) + ' gram/hari';
+  document.getElementById('molaseTotal').textContent = formatNum(molaseTotal/1000, 2) + ' kg';
+}
+
+function buatJadwal(jmlEmber, totalBenih, bobotAwal, bobotAkhir) {
+  const mingguTotal = 8;
+  const rows = [];
+  const FRtable = [
+    {maxG: 5, fr: 0.06}, {maxG: 15, fr: 0.05}, {maxG: 30, fr: 0.05},
+    {maxG: 50, fr: 0.04}, {maxG: 70, fr: 0.035}, {maxG: 100, fr: 0.03},
+    {maxG: 9999, fr: 0.025}
+  ];
+  let totalPakan = 0;
+  const dataArr = [];
+  for (let m = 0; m <= mingguTotal; m++) {
+    const progress = m / mingguTotal;
+    const bobot = bobotAwal + (bobotAkhir - bobotAwal) * progress;
+    const biomassaGram = totalBenih * bobot;
+    let fr = FRtable.find(x => bobot <= x.maxG).fr;
+    const pakanHarian = biomassaGram * fr;
+    const pakanMingguan = pakanHarian * 7;
+    totalPakan += pakanMingguan;
+    const row = {m, bobot, biomassaGram, fr, pakanHarian, pakanMingguan};
+    dataArr.push(row);
+    rows.push(`
+      <tr>
+        <td>Minggu ${m}</td>
+        <td>${formatNum(bobot, 1)} g</td>
+        <td>${formatNum(biomassaGram/1000, 2)} kg</td>
+        <td>${(fr*100).toFixed(1)}%</td>
+        <td>${formatNum(pakanHarian, 0)} g</td>
+        <td>${formatNum(pakanMingguan/1000, 2)} kg</td>
+      </tr>`);
+  }
+  const html = `
+    <table>
+      <thead><tr>
+        <th>Periode</th><th>Bobot/ekor</th><th>Biomassa</th>
+        <th>FR</th><th>Pakan/Hari</th><th>Pakan/Minggu</th>
+      </tr></thead>
+      <tbody>${rows.join('')}</tbody>
+      <tfoot><tr style="background:rgba(79,172,254,0.1);">
+        <td colspan="5" style="text-align:right; font-weight:600; padding:12px;">Total Pakan (estimasi):</td>
+        <td style="font-weight:700; color:#4facfe;">${formatNum(totalPakan/1000, 2)} kg</td>
+      </tr></tfoot>
+    </table>
+    <div class="note info" style="margin-top:14px;">
+      📌 Jadwal di atas untuk <b>${totalBenih} ekor</b> (${jmlEmber} ember × ${totalBenih/jmlEmber} ekor).
+      Bobot naik linear dari ${bobotAwal} g ke ${bobotAkhir} g dalam 8 minggu. Pakan 2–3× sehari.
+    </div>`;
+  document.getElementById('jadwalContainer').innerHTML = html;
+  return {dataArr, totalPakan};
+}
+
+/* ============ LOG HARIAN ============ */
+let logData = load('lele_log', []);
+
+function simpanLog() {
+  const tgl = document.getElementById('logTanggal').value || todayISO();
+  const entry = {
+    id: Date.now(),
+    tanggal: tgl,
+    hari: document.getElementById('logHari').value,
+    pakan: parseFloat(document.getElementById('logPakan').value) || 0,
+    ph: parseFloat(document.getElementById('logPH').value) || 7,
+    suhu: parseFloat(document.getElementById('logSuhu').value) || 28,
+    flok: parseFloat(document.getElementById('logFlok').value) || 0,
+    mati: parseInt(document.getElementById('logMati').value) || 0,
+    catatan: document.getElementById('logCatatan').value.trim()
+  };
+  logData.unshift(entry);
+  save('lele_log', logData);
+  renderLog();
+  clearFormLog();
+  showToast('✅ Log berhasil disimpan!');
+}
+
+function clearFormLog() {
+  document.getElementById('logTanggal').value = todayISO();
+  document.getElementById('logPakan').value = 0;
+  document.getElementById('logMati').value = 0;
+  document.getElementById('logCatatan').value = '';
+}
+
+function renderLog() {
+  const container = document.getElementById('logList');
+  document.getElementById('logCount').textContent = logData.length;
+
+  // statistik
+  let totalPakan = 0, totalMati = 0, totalPH = 0;
+  logData.forEach(l => { totalPakan += l.pakan; totalMati += l.mati; totalPH += l.ph; });
+  document.getElementById('statPakan').textContent = formatNum(totalPakan, 0) + ' g';
+  document.getElementById('statMati').textContent = totalMati + ' ekor';
+  document.getElementById('statPH').textContent = logData.length ? (totalPH/logData.length).toFixed(2) : '-';
+
+  if (!logData.length) {
+    container.innerHTML = `<div class="empty-state"><div class="big">📝</div>Belum ada log.</div>`;
+    return;
+  }
+  container.innerHTML = logData.map(l => {
+    let phBadge = 'ok';
+    if (l.ph < 6.5 || l.ph > 8.5) phBadge = 'warn';
+    if (l.ph < 6 || l.ph > 9) phBadge = 'bad';
+    let flokBadge = 'ok';
+    if (l.flok < 20 || l.flok > 80) flokBadge = 'warn';
+    if (l.flok > 120) flokBadge = 'bad';
+    return `
+      <div class="log-entry">
+        <div class="log-head">
+          <span class="log-date">📅 ${l.tanggal} (Hari ${l.hari})</span>
+          <button class="sm danger" onclick="hapusLog(${l.id})">🗑️</button>
+        </div>
+        <div class="log-detail">
+          🍽️ Pakan: <b>${formatNum(l.pakan, 0)} g</b> &nbsp;|&nbsp;
+          💧 pH: <b>${l.ph}</b> <span class="badge ${phBadge}">${phBadge==='ok'?'OK':phBadge==='warn'?'Cek':'Bahaya'}</span> &nbsp;|&nbsp;
+          🌡️ Suhu: <b>${l.suhu}°C</b><br>
+          🧪 Flok: <b>${l.flok} ml/L</b> <span class="badge ${flokBadge}">${flokBadge==='ok'?'OK':flokBadge==='warn'?'Cek':'Bahaya'}</span> &nbsp;|&nbsp;
+          💀 Mati: <b>${l.mati} ekor</b>
+        </div>
+        ${l.catatan ? `<div class="log-note">📝 ${l.catatan}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function hapusLog(id) {
+  if (!confirm('Hapus log ini?')) return;
+  logData = logData.filter(l => l.id !== id);
+  save('lele_log', logData);
+  renderLog();
+}
+function hapusSemuaLog() {
+  if (!confirm('Hapus SEMUA log?')) return;
+  logData = [];
+  save('lele_log', logData);
+  renderLog();
+}
+
+function exportLogCSV() {
+  if (!logData.length) return alert('Belum ada log.');
+  const header = ['Tanggal','Hari','Pakan(g)','pH','Suhu(C)','Flok(ml/L)','Mati(ekor)','Catatan'];
+  const rows = logData.map(l => [l.tanggal, l.hari, l.pakan, l.ph, l.suhu, l.flok, l.mati, `"${(l.catatan||'').replace(/"/g,'""')}"`]);
+  downloadCSV([header, ...rows], 'log_harian_lele.csv');
+}
+
+/* ============ TRACKING SAMPLING ============ */
+let sampData = load('lele_sampling', []);
+
+function simpanSampling() {
+  const tgl = document.getElementById('sampTanggal').value || todayISO();
+  const jumlah = parseInt(document.getElementById('sampJumlah').value) || 10;
+  const berat = parseFloat(document.getElementById('sampBerat').value) || 100;
+  const bobotRata = berat / jumlah;
+  const populasi = parseInt(document.getElementById('sampPopulasi').value) || 0;
+  const biomassa = (populasi * bobotRata) / 1000;
+  const entry = {
+    id: Date.now(),
+    tanggal: tgl,
+    hari: document.getElementById('sampHari').value,
+    jumlah, berat, bobotRata, populasi, biomassa,
+    catatan: document.getElementById('sampCatatan').value.trim()
+  };
+  sampData.push(entry);
+  sampData.sort((a,b) => a.hari - b.hari);
+  save('lele_sampling', sampData);
+  renderSampling();
+  renderChart();
+  document.getElementById('sampCatatan').value = '';
+  showToast('✅ Sampling disimpan!');
+}
+
+function renderSampling() {
+  const container = document.getElementById('sampList');
+  document.getElementById('sampCount').textContent = sampData.length;
+  if (!sampData.length) {
+    container.innerHTML = `<div class="empty-state"><div class="big">📏</div>Belum ada data sampling.</div>`;
+    return;
+  }
+  // hitung ADG
+  container.innerHTML = sampData.slice().reverse().map((s, i, arr) => {
+    let adg = null;
+    if (i > 0) {
+      const prev = arr[i-1];
+      const deltaHari = s.hari - prev.hari;
+      if (deltaHari > 0) adg = (s.bobotRata - prev.bobotRata) / deltaHari;
+    }
+    return `
+      <div class="sample-entry">
+        <div class="log-head">
+          <span class="log-date">📅 ${s.tanggal} (Hari ${s.hari})</span>
+          <button class="sm danger" onclick="hapusSampling(${s.id})">🗑️</button>
+        </div>
+        <div class="log-detail">
+          ⚖️ Bobot rata-rata: <b>${formatNum(s.bobotRata, 1)} g/ekor</b> (${s.jumlah} ekor, total ${s.berat} g)<br>
+          👥 Estimasi populasi: <b>${s.populasi} ekor</b><br>
+          📦 Biomassa: <b>${formatNum(s.biomassa, 2)} kg</b>
+          ${adg !== null ? `<br>📈 ADG: <b>${formatNum(adg, 2)} g/hari</b>` : ''}
+        </div>
+        ${s.catatan ? `<div class="log-note">📝 ${s.catatan}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function hapusSampling(id) {
+  if (!confirm('Hapus data sampling ini?')) return;
+  sampData = sampData.filter(s => s.id !== id);
+  save('lele_sampling', sampData);
+  renderSampling();
+  renderChart();
+}
+function hapusSemuaSampling() {
+  if (!confirm('Hapus SEMUA data sampling?')) return;
+  sampData = [];
+  save('lele_sampling', sampData);
+  renderSampling();
+  renderChart();
+}
+
+function exportSamplingCSV() {
+  if (!sampData.length) return alert('Belum ada data sampling.');
+  const header = ['Tanggal','Hari','Jumlah Sampel','Total Berat(g)','Bobot Rata2(g)','Populasi','Biomassa(kg)','Catatan'];
+  const rows = sampData.map(s => [s.tanggal, s.hari, s.jumlah, s.berat, s.bobotRata.toFixed(2), s.populasi, s.biomassa.toFixed(2), `"${(s.catatan||'').replace(/"/g,'""')}"`]);
+  downloadCSV([header, ...rows], 'tracking_sampling_lele.csv');
+}
+
+function renderChart() {
+  const container = document.getElementById('chartSampling');
+  if (sampData.length < 2) {
+    container.innerHTML = `<div class="empty-state"><div class="big">📈</div>Minimal 2 data sampling untuk grafik.</div>`;
+    return;
+  }
+  const W = 700, H = 250, P = 40;
+  const maxHari = Math.max(...sampData.map(s => +s.hari));
+  const minHari = Math.min(...sampData.map(s => +s.hari));
+  const maxBobot = Math.max(...sampData.map(s => s.bobotRata)) * 1.15;
+  const rangeHari = maxHari - minHari || 1;
+
+  const x = h => P + ((h - minHari) / rangeHari) * (W - 2*P);
+  const y = b => H - P - (b / maxBobot) * (H - 2*P);
+
+  const points = sampData.map(s => `${x(+s.hari)},${y(s.bobotRata)}`).join(' ');
+  const circles = sampData.map(s =>
+    `<circle cx="${x(+s.hari)}" cy="${y(s.bobotRata)}" r="5" fill="#4facfe" stroke="#00f2fe" stroke-width="2"/>
+     <text x="${x(+s.hari)}" y="${y(s.bobotRata)-12}" fill="#a0aec0" font-size="11" text-anchor="middle">${s.bobotRata.toFixed(0)}g</text>`
+  ).join('');
+
+  // gridlines Y
+  let grid = '';
+  for (let i = 0; i <= 4; i++) {
+    const val = (maxBobot / 4) * i;
+    const yy = y(val);
+    grid += `<line x1="${P}" y1="${yy}" x2="${W-P}" y2="${yy}" stroke="rgba(255,255,255,0.08)" />
+             <text x="${P-6}" y="${yy+4}" fill="#718096" font-size="10" text-anchor="end">${val.toFixed(0)}g</text>`;
+  }
+
+  const svg = `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%; height:auto; max-height:300px;">
+      ${grid}
+      <polyline points="${points}" fill="none" stroke="#4facfe" stroke-width="3" stroke-linejoin="round"/>
+      ${circles}
+      <line x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" stroke="#718096" />
+      <line x1="${P}" y1="${P}" x2="${P}" y2="${H-P}" stroke="#718096" />
+      <text x="${W/2}" y="${H-8}" fill="#a0aec0" font-size="12" text-anchor="middle">Hari</text>
+      <text x="14" y="${H/2}" fill="#a0aec0" font-size="12" text-anchor="middle" transform="rotate(-90 14 ${H/2})">Bobot (g)</text>
+    </svg>`;
+  container.innerHTML = svg;
+}
+
+/* ============ EXPORT JADWAL ============ */
+function exportJadwalCSV() {
+  if (!window._jadwalData || !window._jadwalData.dataArr) return alert('Klik Hitung dulu.');
+  const header = ['Minggu','Bobot/ekor(g)','Biomassa(kg)','FR(%)','Pakan/Hari(g)','Pakan/Minggu(kg)'];
+  const rows = window._jadwalData.dataArr.map(r => [
+    r.m, r.bobot.toFixed(1), (r.biomassaGram/1000).toFixed(2),
+    (r.fr*100).toFixed(1), r.pakanHarian.toFixed(0), (r.pakanMingguan/1000).toFixed(2)
+  ]);
+  downloadCSV([header, ...rows], 'jadwal_pakan_lele.csv');
+}
+
+/* ============ DOWNLOAD CSV ============ */
+function downloadCSV(data, filename) {
+  const csv = data.map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  showToast('📥 File terunduh: ' + filename);
+}
+
+/* ============ TOAST ============ */
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed; bottom:30px; left:50%; transform:translateX(-50%);' +
+    'background:linear-gradient(90deg,#4facfe,#00f2fe); color:#0f2027;' +
+    'padding:12px 24px; border-radius:30px; font-weight:600; z-index:9999;' +
+    'box-shadow:0 8px 24px rgba(79,172,254,0.5); font-size:0.9em;';
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = '0.4s'; }, 2000);
+  setTimeout(() => t.remove(), 2500);
+}
+
+/* ============ INIT ============ */
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('logTanggal').value = todayISO();
+  document.getElementById('sampTanggal').value = todayISO();
+  hitung();
+  renderLog();
+  renderSampling();
+  renderChart();
+});
+</script>
+</body>
+</html>
