@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kalkulator & Manajemen Lele Bioflok per Ember</title>
+<title>Manajemen Lele Bioflok per Ember</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -94,21 +94,13 @@
     color: #0f2027; transition: 0.2s;
   }
   button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79,172,254,0.4); }
-  button.secondary {
-    background: rgba(255,255,255,0.1); color: #e0e0e0;
-  }
+  button.secondary { background: rgba(255,255,255,0.1); color: #e0e0e0; }
   button.danger {
     background: rgba(245,101,101,0.2); color: #f56565;
     border: 1px solid rgba(245,101,101,0.3);
   }
-  button.success {
-    background: linear-gradient(90deg, #48bb78, #38a169);
-    color: #fff;
-  }
-  button.warn {
-    background: linear-gradient(90deg, #f6ad55, #ed8936);
-    color: #fff;
-  }
+  button.success { background: linear-gradient(90deg, #48bb78, #38a169); color: #fff; }
+  button.warn { background: linear-gradient(90deg, #f6ad55, #ed8936); color: #fff; }
   button.full { width: 100%; }
   button.sm { padding: 6px 12px; font-size: 0.82em; }
 
@@ -131,12 +123,13 @@
   table th {
     background: rgba(79,172,254,0.15); color: #4facfe;
     padding: 10px 6px; text-align: left; font-weight: 600;
-    font-size: 0.85em; position: sticky; top: 0;
+    font-size: 0.85em;
   }
   table th:first-child { border-radius: 8px 0 0 0; }
   table th:last-child { border-radius: 0 8px 0 0; }
   table td { padding: 9px 6px; border-bottom: 1px solid rgba(255,255,255,0.06); }
   table tr:hover td { background: rgba(255,255,255,0.03); }
+  .table-scroll { overflow-x: auto; }
 
   .highlight-box {
     background: linear-gradient(135deg, rgba(79,172,254,0.15), rgba(0,242,254,0.08));
@@ -164,12 +157,8 @@
     padding: 10px 14px; border-radius: 8px; font-size: 0.85em;
     color: #fbd38d; margin-top: 12px;
   }
-  .note.info {
-    background: rgba(79,172,254,0.1); border-left-color: #4facfe; color: #bee3f8;
-  }
-  .note.success {
-    background: rgba(72,187,120,0.1); border-left-color: #48bb78; color: #c6f6d5;
-  }
+  .note.info { background: rgba(79,172,254,0.1); border-left-color: #4facfe; color: #bee3f8; }
+  .note.success { background: rgba(72,187,120,0.1); border-left-color: #48bb78; color: #c6f6d5; }
 
   .row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px; }
   @media (max-width: 600px) { .row-3 { grid-template-columns: 1fr; } }
@@ -183,8 +172,7 @@
   .log-entry {
     background: rgba(0,0,0,0.2); border-radius: 10px;
     padding: 12px 14px; margin-bottom: 10px;
-    border-left: 3px solid #4facfe;
-    font-size: 0.9em;
+    border-left: 3px solid #4facfe; font-size: 0.9em;
   }
   .log-entry .log-head {
     display: flex; justify-content: space-between; align-items: center;
@@ -197,18 +185,7 @@
   .sample-entry {
     background: rgba(0,0,0,0.2); border-radius: 10px;
     padding: 12px 14px; margin-bottom: 10px;
-    border-left: 3px solid #48bb78;
-    font-size: 0.9em;
-  }
-
-  .progress-bar {
-    width: 100%; height: 8px; background: rgba(0,0,0,0.3);
-    border-radius: 4px; overflow: hidden; margin-top: 8px;
-  }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #4facfe, #00f2fe);
-    border-radius: 4px; transition: width 0.5s;
+    border-left: 3px solid #48bb78; font-size: 0.9em;
   }
 
   .empty-state {
@@ -220,6 +197,12 @@
   footer {
     text-align: center; padding: 20px; color: #718096; font-size: 0.82em;
   }
+
+  /* Growth phase coloring */
+  .phase-benih { color: #63b3ed; font-weight: 600; }
+  .phase-glondongan { color: #68d391; font-weight: 600; }
+  .phase-konsumsi { color: #f6ad55; font-weight: 600; }
+  .phase-premium { color: #f687b3; font-weight: 600; }
 
   /* PRINT STYLES */
   @media print {
@@ -243,7 +226,7 @@
 <div class="container">
   <header>
     <h1>🐟 Manajemen Lele Bioflok per Ember</h1>
-    <p>Kalkulator padat tebar, pakan, molase, log harian & tracking sampling</p>
+    <p>Kalkulator padat tebar, pakan, molase, log harian, tracking sampling & tabel pertumbuhan</p>
   </header>
 
   <!-- TABS -->
@@ -251,6 +234,7 @@
     <div class="tab active" onclick="switchTab('kalkulator', this)">🧮 Kalkulator</div>
     <div class="tab" onclick="switchTab('log', this)">📝 Log Harian</div>
     <div class="tab" onclick="switchTab('sampling', this)">📏 Tracking Sampling</div>
+    <div class="tab" onclick="switchTab('pertumbuhan', this)">📊 Pertumbuhan</div>
     <div class="tab" onclick="switchTab('air', this)">🌊 Kualitas Air</div>
     <div class="tab" onclick="switchTab('tips', this)">💡 Tips</div>
   </div>
@@ -480,7 +464,6 @@
         <div class="input-group">
           <label>Perkiraan Populasi Hidup (ekor)</label>
           <input type="number" id="sampPopulasi" value="45" min="0">
-          <small>Dari hitung manual atau estimasi</small>
         </div>
         <div class="input-group">
           <label>Catatan</label>
@@ -511,6 +494,162 @@
       <div id="chartSampling" class="empty-state">
         <div class="big">📈</div>
         Belum ada data untuk grafik.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TAB PERTUMBUHAN ============ -->
+  <div id="tab-pertumbuhan" class="tab-content">
+    <div class="card">
+      <h2>
+        <span class="left"><span class="icon">📊</span> Tabel Pertumbuhan Lele (Minggu 1 – 4 Bulan)</span>
+        <button class="sm secondary" onclick="exportPertumbuhanCSV()">📥 Export CSV</button>
+      </h2>
+      <div class="table-scroll">
+        <table id="tabelPertumbuhan">
+          <thead>
+            <tr>
+              <th>Umur</th>
+              <th>Bobot Rata-rata</th>
+              <th>Panjang</th>
+              <th>Fase</th>
+              <th>Catatan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Minggu 1</td><td>5–7 g</td><td>5,2 cm</td><td class="phase-benih">Benih awal</td><td>Adaptasi lingkungan</td></tr>
+            <tr><td>Minggu 2</td><td>9–10 g</td><td>9,6 cm</td><td class="phase-benih">Benih</td><td>Mulai aktif makan pelet halus</td></tr>
+            <tr><td>Minggu 3</td><td>9–20 g</td><td>10,6 cm</td><td class="phase-benih">Benih</td><td>Pertumbuhan mulai cepat</td></tr>
+            <tr><td>Minggu 4</td><td>15–30 g</td><td>12,9 cm</td><td class="phase-benih">Benih besar</td><td>Sortir pertama (grading)</td></tr>
+            <tr><td>Minggu 5</td><td>25–40 g</td><td>14,7 cm</td><td class="phase-glondongan">Glondongan</td><td>Mulai fase pembesaran</td></tr>
+            <tr><td>Minggu 6</td><td>30–50 g</td><td>14,8 cm</td><td class="phase-glondongan">Glondongan</td><td>Nafsu makan meningkat</td></tr>
+            <tr><td>Minggu 7</td><td>40–65 g</td><td>15,8 cm</td><td class="phase-glondongan">Glondongan</td><td>Pertumbuhan stabil</td></tr>
+            <tr><td>Minggu 8</td><td>50–80 g</td><td>16–18 cm</td><td class="phase-konsumsi">Pra-konsumsi</td><td>~70 g pada kondisi optimal</td></tr>
+            <tr><td>Minggu 10</td><td>80–100 g</td><td>18–20 cm</td><td class="phase-konsumsi">Konsumsi kecil</td><td>1 kg = 10 ekor</td></tr>
+            <tr><td>Minggu 12 (3 bulan)</td><td>100–200 g</td><td>20–25 cm</td><td class="phase-konsumsi">Konsumsi</td><td>1 kg = 5–10 ekor</td></tr>
+            <tr><td>Minggu 16 (4 bulan)</td><td>200–300 g</td><td>25–30 cm</td><td class="phase-premium">Premium</td><td>Panen optimal lele dumbo</td></tr>
+            <tr><td>Bulan 5–6</td><td>500 g – 1 kg</td><td>40–50 cm</td><td class="phase-premium">Jumbo</td><td>Perlu waktu tambahan</td></tr>
+            <tr><td>Bulan 6–8</td><td>1–2 kg</td><td>60–70 cm</td><td class="phase-premium">Indukan</td><td>Ukuran maksimal lele dumbo</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note info" style="margin-top:14px;">
+        📌 Data di atas merupakan <b>rata-rata</b> dari berbagai penelitian. 
+        Pertumbuhan aktual dipengaruhi pakan, suhu, kualitas air, dan padat tebar.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="left"><span class="icon">📈</span> Referensi Ilmiah — Lele Dumbo Bioflok</span></h2>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Hari ke-</th><th>0</th><th>7</th><th>14</th><th>21</th><th>28</th>
+              <th>35</th><th>42</th><th>49</th><th>56</th><th>63</th><th>70</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Bobot (g)</b></td>
+              <td>0,4</td><td>1,1</td><td>2,3</td><td>4,2</td><td>11,0</td>
+              <td>18,5</td><td>21,5</td><td>34,0</td><td>46,7</td><td>85,0</td><td>125,7</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note info" style="margin-top:10px;">
+        Sumber: Penelitian bioflok lele dumbo dengan inokulan bakteri 5 hari sekali.
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2><span class="left"><span class="icon">🧬</span> Lele Sangkuriang (Minggu 1–6)</span></h2>
+        <table>
+          <thead><tr><th>Minggu</th><th>Perlakuan A</th><th>Perlakuan B</th><th>Kontrol</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>17,7 g</td><td>22,0 g</td><td>18,3 g</td></tr>
+            <tr><td>2</td><td>31,0 g</td><td>33,0 g</td><td>32,0 g</td></tr>
+            <tr><td>3</td><td>43,0 g</td><td>46,7 g</td><td>43,0 g</td></tr>
+            <tr><td>4</td><td>62,3 g</td><td>65,7 g</td><td>63,0 g</td></tr>
+            <tr><td>5</td><td>71,3 g</td><td>88,0 g</td><td>77,3 g</td></tr>
+            <tr><td>6</td><td>110,0 g</td><td>121,0 g</td><td>117,7 g</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2><span class="left"><span class="icon">🐟</span> Lele Mutiara (per 2 minggu)</span></h2>
+        <table>
+          <thead><tr><th>Minggu ke-</th><th>2</th><th>4</th><th>6</th><th>8</th></tr></thead>
+          <tbody>
+            <tr><td><b>Bobot (g)</b></td><td>7,05</td><td>14,13</td><td>28,71</td><td>59,51</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="left"><span class="icon">📐</span> Ukuran Lele Berdasarkan Jumlah per Kg</span></h2>
+      <table>
+        <thead><tr><th>Ukuran</th><th>Jumlah per kg</th><th>Bobot per ekor</th><th>Umur perkiraan</th></tr></thead>
+        <tbody>
+          <tr><td>Benih</td><td>500–1000 ekor/kg</td><td>1–2 g</td><td>2–3 minggu</td></tr>
+          <tr><td>Glondongan</td><td>100–200 ekor/kg</td><td>5–10 g</td><td>4–6 minggu</td></tr>
+          <tr><td>Konsumsi kecil</td><td>16–20 ekor/kg</td><td>50–62 g</td><td>2 bulan</td></tr>
+          <tr><td>Konsumsi sedang</td><td>10–12 ekor/kg</td><td>83–100 g</td><td>2,5–3 bulan</td></tr>
+          <tr><td>Konsumsi besar</td><td>8–10 ekor/kg</td><td>100–125 g</td><td>3–4 bulan</td></tr>
+          <tr><td>Premium</td><td>5–6 ekor/kg</td><td>167–200 g</td><td>4–5 bulan</td></tr>
+          <tr><td>Jumbo</td><td>2–4 ekor/kg</td><td>250–500 g</td><td>5–6 bulan</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2><span class="left"><span class="icon">🧬</span> Perbandingan Lele Dumbo vs Sangkuriang</span></h2>
+      <table>
+        <thead><tr><th>Parameter</th><th>Lele Dumbo</th><th>Lele Sangkuriang</th></tr></thead>
+        <tbody>
+          <tr><td>Pertumbuhan harian (umur 5–26 hari)</td><td>20,38%</td><td>29,26%</td></tr>
+          <tr><td>Panjang standar (benih)</td><td>3–5 cm</td><td>3–5 cm</td></tr>
+          <tr><td>Waktu panen</td><td>3–4 bulan</td><td>2,5–3 bulan</td></tr>
+          <tr><td>Bobot panen</td><td>200–300 g/ekor</td><td>150–250 g/ekor</td></tr>
+          <tr><td>Keunggulan</td><td>Ukuran lebih besar</td><td>Pertumbuhan lebih cepat</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2><span class="left"><span class="icon">🔢</span> Estimasi ADG (Average Daily Gain)</span></h2>
+        <table>
+          <thead><tr><th>Fase</th><th>ADG (g/hari)</th><th>Keterangan</th></tr></thead>
+          <tbody>
+            <tr><td>Minggu 1–4</td><td>0,5–1,0</td><td>Pertumbuhan awal lambat</td></tr>
+            <tr><td>Minggu 5–8</td><td>1,5–2,5</td><td>Mulai percepatan</td></tr>
+            <tr><td>Minggu 9–12</td><td>2,5–4,0</td><td>Fase pertumbuhan cepat</td></tr>
+            <tr><td>Minggu 13–16</td><td>3,0–5,0</td><td>Mendekati panen</td></tr>
+            <tr><td>Setelah 4 bulan</td><td>2,0–3,0</td><td>Melambat (hukum kubik)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2><span class="left"><span class="icon">⚡</span> Faktor yang Mempengaruhi Pertumbuhan</span></h2>
+        <table>
+          <thead><tr><th>Faktor</th><th>Pengaruh</th><th>Optimal</th></tr></thead>
+          <tbody>
+            <tr><td>Suhu air</td><td>Metabolisme & nafsu makan</td><td>26–30°C</td></tr>
+            <tr><td>Pakan</td><td>Protein tinggi (28–32%)</td><td>3–5% biomassa/hari</td></tr>
+            <tr><td>Oksigen</td><td>Konversi pakan</td><td>>4 mg/L</td></tr>
+            <tr><td>pH</td><td>Stress & kesehatan</td><td>6,5–8,0</td></tr>
+            <tr><td>Amonia</td><td>Toksisitas</td><td><0,1 mg/L</td></tr>
+            <tr><td>Padat tebar</td><td>Kompetisi</td><td>30–80 ekor/ember</td></tr>
+            <tr><td>Sortir</td><td>Kanibalisme</td><td>Tiap 2 minggu</td></tr>
+            <tr><td>Probiotik</td><td>Kualitas air & pencernaan</td><td>Rutin ditambahkan</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -560,6 +699,7 @@
         <li>✅ <b>Ukur flok dengan kerucut Imhoff</b> atau botol transparan.</li>
         <li>✅ <b>Catat log harian</b> — biar tahu tren kualitas air dan pakan.</li>
         <li>✅ <b>Sampling tiap 10 hari</b> — untuk pantau pertumbuhan & estimasi populasi.</li>
+        <li>✅ <b>Bandingkan dengan tabel pertumbuhan</b> — cek apakah lele Anda on-track.</li>
       </ul>
     </div>
   </div>
@@ -628,10 +768,8 @@ function hitung() {
   document.getElementById('rMargin').textContent = formatRp(margin);
   document.getElementById('rMargin').className = 'value ' + (margin > 0 ? 'good' : 'warn');
 
-  // Jadwal
   window._jadwalData = buatJadwal(jmlEmber, totalBenih, bobotAwal, bobotAkhir);
 
-  // Molase
   const totalAir = jmlEmber * volEmber;
   const molaseAwal = totalAir * 0.4;
   const molaseHarian = totalAir * 0.15;
@@ -725,7 +863,6 @@ function renderLog() {
   const container = document.getElementById('logList');
   document.getElementById('logCount').textContent = logData.length;
 
-  // statistik
   let totalPakan = 0, totalMati = 0, totalPH = 0;
   logData.forEach(l => { totalPakan += l.pakan; totalMati += l.mati; totalPH += l.ph; });
   document.getElementById('statPakan').textContent = formatNum(totalPakan, 0) + ' g';
@@ -814,7 +951,6 @@ function renderSampling() {
     container.innerHTML = `<div class="empty-state"><div class="big">📏</div>Belum ada data sampling.</div>`;
     return;
   }
-  // hitung ADG
   container.innerHTML = sampData.slice().reverse().map((s, i, arr) => {
     let adg = null;
     if (i > 0) {
@@ -882,7 +1018,6 @@ function renderChart() {
      <text x="${x(+s.hari)}" y="${y(s.bobotRata)-12}" fill="#a0aec0" font-size="11" text-anchor="middle">${s.bobotRata.toFixed(0)}g</text>`
   ).join('');
 
-  // gridlines Y
   let grid = '';
   for (let i = 0; i <= 4; i++) {
     const val = (maxBobot / 4) * i;
@@ -913,6 +1048,18 @@ function exportJadwalCSV() {
     (r.fr*100).toFixed(1), r.pakanHarian.toFixed(0), (r.pakanMingguan/1000).toFixed(2)
   ]);
   downloadCSV([header, ...rows], 'jadwal_pakan_lele.csv');
+}
+
+/* ============ EXPORT TABEL PERTUMBUHAN ============ */
+function exportPertumbuhanCSV() {
+  const table = document.getElementById('tabelPertumbuhan');
+  if (!table) return;
+  const rows = [];
+  table.querySelectorAll('tr').forEach(tr => {
+    const cells = Array.from(tr.querySelectorAll('th, td')).map(c => `"${c.textContent.trim().replace(/"/g,'""')}"`);
+    rows.push(cells);
+  });
+  downloadCSV(rows, 'tabel_pertumbuhan_lele.csv');
 }
 
 /* ============ DOWNLOAD CSV ============ */
