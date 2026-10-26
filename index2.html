@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulasi Budidaya Lele — 4 Varian × 4 Sistem × Ukuran Bibit</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --card2:#273449; --border:#334155;
+    --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --accent2:#22c55e;
+    --warn:#f59e0b; --danger:#ef4444; --purple:#a78bfa;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:linear-gradient(160deg,#0f172a 0%,#1a2740 100%);
+    color:var(--text); min-height:100vh; padding:24px 16px 60px;
+  }
+  .wrap{max-width:1320px; margin:0 auto;}
+  header{text-align:center; margin-bottom:28px;}
+  header h1{font-size:1.7rem; font-weight:700; letter-spacing:.3px;}
+  header h1 span{color:var(--accent);}
+  header p{color:var(--muted); margin-top:8px; font-size:.92rem;}
+
+  .panel{
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; padding:20px; margin-bottom:20px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);
+  }
+  .panel h2{
+    font-size:1.05rem; margin-bottom:16px; color:var(--accent);
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel h2::before{content:''; width:4px; height:18px; background:var(--accent); border-radius:2px;}
+
+  .controls{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px;}
+  .control label{display:block; font-size:.8rem; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px;}
+  .control select, .control input[type=number]{
+    width:100%; padding:11px 12px; border-radius:10px;
+    background:var(--card2); color:var(--text);
+    border:1px solid var(--border); font-size:.95rem; outline:none;
+    transition:.2s;
+  }
+  .control select:focus, .control input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(56,189,248,.15);}
+  .control .hint{font-size:.7rem; color:var(--muted); margin-top:4px; font-style:italic;}
+
+  .slider-wrap{display:flex; align-items:center; gap:10px;}
+  .slider-wrap input[type=range]{flex:1; accent-color:var(--accent); height:6px;}
+  .slider-val{
+    min-width:58px; text-align:center; padding:6px 8px;
+    background:var(--card2); border:1px solid var(--border);
+    border-radius:8px; font-weight:700; color:var(--accent); font-size:.9rem;
+  }
+
+  .summary{display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px;}
+  .stat{
+    background:var(--card2); border:1px solid var(--border);
+    border-radius:12px; padding:14px 16px;
+  }
+  .stat .lbl{font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.6px;}
+  .stat .val{font-size:1.15rem; font-weight:700; margin-top:6px; color:var(--accent2);}
+  .stat .val small{font-size:.7rem; font-weight:400; color:var(--muted);}
+  .stat.highlight{border-color:var(--purple);}
+  .stat.highlight .val{color:var(--purple);}
+
+  table{width:100%; border-collapse:collapse; font-size:.85rem;}
+  thead th{
+    background:var(--card2); color:var(--muted); font-weight:600;
+    text-align:left; padding:10px 12px; font-size:.72rem;
+    text-transform:uppercase; letter-spacing:.5px;
+    border-bottom:2px solid var(--border); position:sticky; top:0;
+  }
+  tbody td{padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  tbody tr:hover{background:rgba(56,189,248,.06);}
+  tbody tr.harvest-row{background:rgba(34,197,94,.12); font-weight:600;}
+  tbody tr.harvest-row td{color:var(--accent2);}
+  tbody tr.stocking-row td{color:var(--purple);}
+  .bar-cell{width:24%; min-width:110px;}
+  .bar{height:9px; border-radius:5px; background:var(--border); overflow:hidden;}
+  .bar > div{height:100%; border-radius:5px; background:linear-gradient(90deg,#38bdf8,#22c55e); transition:width .35s;}
+  .range{color:var(--accent); font-weight:600;}
+  .range small{color:var(--muted); font-weight:400;}
+
+  .badge{display:inline-block; padding:3px 9px; border-radius:20px; font-size:.7rem; font-weight:600;}
+  .badge.bio{background:rgba(56,189,248,.18); color:#7dd3fc;}
+  .badge.semi{background:rgba(245,158,11,.18); color:#fcd34d;}
+  .badge.konv{background:rgba(148,163,184,.18); color:#cbd5e1;}
+  .badge.dingin{background:rgba(139,92,246,.18); color:#c4b5fd;}
+
+  .info-box{
+    background:rgba(167,139,250,.1); border:1px solid rgba(167,139,250,.3);
+    border-radius:10px; padding:12px 16px; margin-top:12px;
+    font-size:.82rem; color:#ddd6fe; line-height:1.6;
+  }
+  .info-box b{color:#c4b5fd;}
+
+  .note{font-size:.78rem; color:var(--muted); margin-top:14px; line-height:1.7;}
+  .note b{color:var(--warn);}
+  .note code{background:var(--card2); padding:1px 6px; border-radius:4px; font-size:.75rem; color:#7dd3fc;}
+
+  @media(max-width:760px){
+    header h1{font-size:1.3rem;}
+    .panel{padding:16px;}
+    table{font-size:.78rem;}
+    thead th, tbody td{padding:8px 6px;}
+    .bar-cell{display:none;}
+    thead th.bar-cell{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Simulasi Budidaya <span>Lele</span></h1>
+    <p>4 Varian × 4 Sistem × Ukuran Bibit Awal — Proyeksi Pertumbuhan Mingguan</p>
+  </header>
+
+  <!-- KONTROL -->
+  <section class="panel">
+    <h2>Parameter Budidaya</h2>
+    <div class="controls">
+      <div class="control">
+        <label for="varian">Varian Lele</label>
+        <select id="varian">
+          <option value="Mutiara">Lele Mutiara</option>
+          <option value="Sangkuriang">Lele Sangkuriang</option>
+          <option value="Masamo">Lele Masamo</option>
+          <option value="Phyton">Lele Phyton</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="sistem">Sistem Budidaya</label>
+        <select id="sistem">
+          <option value="Bioflok">Bioflok Intensif</option>
+          <option value="Semi">Semi-Intensif</option>
+          <option value="Konvensional">Konvensional Air Tenang</option>
+          <option value="Dingin">Konvensional Daerah Dingin</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="volume">Volume Air (m³)</label>
+        <input id="volume" type="number" min="1" max="1000" step="1" value="1">
+      </div>
+      <div class="control">
+        <label for="bibit">Ukuran Bibit Awal (cm)</label>
+        <div class="slider-wrap">
+          <input id="bibit" type="range" min="3" max="12" step="0.5" value="6">
+          <span class="slider-val" id="bibitVal">6 cm</span>
+        </div>
+        <div class="hint">Bibit kecil → durasi lebih lama; bibit besar → durasi lebih singkat</div>
+      </div>
+    </div>
+
+    <div class="info-box" id="infoBibit"></div>
+  </section>
+
+  <!-- RINGKASAN -->
+  <section class="panel">
+    <h2>Ringkasan Parameter</h2>
+    <div class="summary" id="summary"></div>
+  </section>
+
+  <!-- TABEL PERTUMBUHAN -->
+  <section class="panel">
+    <h2>Simulasi Pertumbuhan Mingguan</h2>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Minggu</th>
+            <th>Ekor Hidup</th>
+            <th>Bobot / Ekor (g)</th>
+            <th>Panjang Tubuh (cm)</th>
+            <th>Biomassa (kg)</th>
+            <th class="bar-cell">Progres</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <p class="note">
+      <b>Catatan:</b> Ukuran bibit awal mempengaruhi <b>bobot tebar</b> dan <b>durasi total</b>. Durasi dasar tiap
+      kombinasi varian×sistem dihitung pada acuan bibit <b>6 cm (±2 g)</b>. Setiap penambahan 1 cm bibit
+      mempersingkat durasi ±3–4 hari (≈0,5 minggu); setiap pengurangan 1 cm memperpanjang durasi serupa.
+      Bobot tebar diestimasi dengan <code>W ≈ (L / 4,6)^3</code> (kebalikan rumus panjang–bobot).
+      Rentang bobot normal ±12% dan panjang ±8% dari nilai tengah kurva logistik.
+    </p>
+  </section>
+
+</div>
+
+<script>
+/* ============================================================
+   DATA DASAR — 4 VARIAN × 4 SISTEM (per 1 m³)
+   Acuan bibit 6 cm (±2 g). Durasi & kurva fase dalam MINGGU.
+   ============================================================ */
+const DATA = {
+  Mutiara: {
+    Bioflok:       { padat:1000, sr:90, bobot:125, minggu:7,  fase:[2,6,14,28,48,72,98,125] },
+    Semi:          { padat:250,  sr:90, bobot:125, minggu:8,  fase:[2,5,12,22,36,54,76,100,125] },
+    Konvensional:  { padat:150,  sr:85, bobot:120, minggu:10, fase:[2,4,9,16,26,38,52,68,85,103,120] },
+    Dingin:        { padat:150,  sr:85, bobot:115, minggu:10, fase:[2,3,7,13,21,31,43,57,72,88,115] }
+  },
+  Sangkuriang: {
+    Bioflok:       { padat:1000, sr:85, bobot:110, minggu:8,  fase:[2,5,12,23,38,56,76,94,110] },
+    Semi:          { padat:250,  sr:85, bobot:110, minggu:9,  fase:[2,4,9,17,28,42,58,76,93,110] },
+    Konvensional:  { padat:150,  sr:80, bobot:105, minggu:11, fase:[2,3,7,13,21,31,43,56,70,84,96,105] },
+    Dingin:        { padat:150,  sr:80, bobot:100, minggu:11, fase:[2,3,6,11,18,27,37,48,60,72,84,100] }
+  },
+  Masamo: {
+    Bioflok:       { padat:1000, sr:80, bobot:142, minggu:9,  fase:[2,5,12,24,40,60,82,105,126,142] },
+    Semi:          { padat:250,  sr:80, bobot:142, minggu:10, fase:[2,4,9,18,30,45,62,81,100,118,142] },
+    Konvensional:  { padat:150,  sr:80, bobot:142, minggu:11, fase:[2,3,7,14,23,34,47,62,78,95,112,142] },
+    Dingin:        { padat:150,  sr:75, bobot:130, minggu:12, fase:[2,3,6,11,18,27,37,48,60,72,85,98,130] }
+  },
+  Phyton: {
+    Bioflok:       { padat:1000, sr:90, bobot:125, minggu:7,  fase:[2,6,15,30,50,74,99,125] },
+    Semi:          { padat:250,  sr:90, bobot:125, minggu:8,  fase:[2,5,12,23,38,56,77,100,125] },
+    Konvensional:  { padat:150,  sr:85, bobot:120, minggu:10, fase:[2,4,9,16,26,38,52,68,85,103,120] },
+    Dingin:        { padat:150,  sr:90, bobot:125, minggu:8,  fase:[2,4,9,17,28,42,58,78,125] }
+  }
+};
+
+const SISTEM_LABEL = {
+  Bioflok:      {label:'Bioflok Intensif',          cls:'bio'},
+  Semi:         {label:'Semi-Intensif',             cls:'semi'},
+  Konvensional: {label:'Konvensional Air Tenang',   cls:'konv'},
+  Dingin:       {label:'Konvensional Daerah Dingin',cls:'dingin'}
+};
+
+/* ---------- Helper ---------- */
+const $ = id => document.getElementById(id);
+const fmt = (n, d=1) => n.toLocaleString('id-ID', {minimumFractionDigits:d, maximumFractionDigits:d});
+
+/* Panjang (cm) → bobot (g): W = (L/4.6)^3 */
+function bobotDariPanjang(L){
+  return Math.pow(L/4.6, 3);
+}
+/* Bobot (g) → panjang (cm): L = 4.6 × W^0.33 */
+function panjangDariBobot(w){
+  return 4.6 * Math.pow(w, 0.33);
+}
+
+/* Rentang bobot normal: ±12% (min 0,1 g) */
+function rentangBobot(tengah){
+  return [Math.max(0.1, tengah*0.88), tengah*1.12];
+}
+/* Rentang panjang normal: ±8% */
+function rentangPanjang(wTengah){
+  const L = panjangDariBobot(wTengah);
+  return [L*0.92, L*1.08];
+}
+
+/* ============================================================
+   INTERPOLASI KURVA — sesuaikan fase terhadap ukuran bibit
+   Input : faseAcuan (array bobot minggu 0..N pada bibit 6 cm)
+   Output: array bobot minggu 0..N' pada bibit aktual
+   Logika:
+     - Bobot tebar aktual = bobotDariPanjang(bibitCm)
+     - Durasi aktual = durasi acuan + delta (bibit lebih besar → lebih singkat)
+     - Kurva di-resample: mulai dari bobot tebar aktual, berakhir di bobot panen
+       dengan bentuk logistik yang sama (dinormalisasi 0..1 pada sumbu minggu)
+   ============================================================ */
+function sesuaikanKurva(faseAcuan, bibitCm){
+  const bibitAcuanCm = 6;
+  const wTebarAcuan = faseAcuan[0];               // ±2 g
+  const wPanen      = faseAcuan[faseAcuan.length-1];
+  const durasiAcuan = faseAcuan.length - 1;       // minggu
+
+  // Bobot tebar aktual berdasarkan ukuran bibit
+  const wTebarAktual = bobotDariPanjang(bibitCm);
+
+  // Delta durasi: +1 cm bibit → −0,5 minggu (≈3,5 hari)
+  const deltaCm = bibitCm - bibitAcuanCm;
+  const deltaMinggu = -deltaCm * 0.5;
+  let durasiAktual = Math.round(durasiAcuan + deltaMinggu);
+  durasiAktual = Math.max(3, Math.min(durasiAktual, durasiAcuan + 4)); // batas wajar
+
+  // Normalisasi kurva acuan ke 0..1 (bobot)
+  const norm = faseAcuan.map(w => (w - wTebarAcuan) / (wPanen - wTebarAcuan));
+
+  // Resample kurva ternormalisasi ke durasi aktual (interpolasi linear)
+  const hasil = [];
+  for(let m=0; m<=durasiAktual; m++){
+    const t = m / durasiAktual;                    // 0..1 pada sumbu minggu
+    const tAcuan = t * durasiAcuan;                // posisi di kurva acuan
+    const i0 = Math.floor(tAcuan);
+    const i1 = Math.min(i0+1, norm.length-1);
+    const frac = tAcuan - i0;
+    const nVal = norm[i0]*(1-frac) + norm[i1]*frac;
+    // Skala ke bobot aktual
+    const w = wTebarAktual + nVal * (wPanen - wTebarAktual);
+    hasil.push(w);
+  }
+  hasil[0] = wTebarAktual;
+  hasil[hasil.length-1] = wPanen;
+  return { fase: hasil, durasi: durasiAktual, wTebar: wTebarAktual };
+}
+
+/* Hitung ekor hidup per minggu (mortalitas linear menuju SR final) */
+function hitungEkorMingguan(padat, srFinal, totalMinggu, volume){
+  const ekorAwal  = padat * volume;
+  const ekorAkhir = ekorAwal * (srFinal/100);
+  const matiTotal = ekorAwal - ekorAkhir;
+  const arr = [];
+  for(let m=0; m<=totalMinggu; m++){
+    arr.push(Math.round(ekorAwal - matiTotal*(m/totalMinggu)));
+  }
+  return arr;
+}
+
+/* ---------- Render ---------- */
+function render(){
+  const varian  = $('varian').value;
+  const sistem  = $('sistem').value;
+  const volume  = Math.max(1, parseFloat($('volume').value) || 1);
+  const bibitCm = parseFloat($('bibit').value);
+
+  $('bibitVal').textContent = bibitCm + ' cm';
+
+  const d = DATA[varian][sistem];
+  const kurva = sesuaikanKurva(d.fase, bibitCm);
+  const fase = kurva.fase;
+  const totalMinggu = kurva.durasi;
+  const wTebar = kurva.wTebar;
+
+  const ekorArr = hitungEkorMingguan(d.padat, d.sr, totalMinggu, volume);
+
+  /* ---- Info bibit ---- */
+  const durasiAcuan = d.fase.length - 1;
+  const selisih = totalMinggu - durasiAcuan;
+  const selisihHari = Math.round(selisih * 7);
+  $('infoBibit').innerHTML = `
+    Bibit <b>${bibitCm} cm</b> ≈ <b>${fmt(wTebar,1)} g/ekor</b>.
+    Durasi acuan (bibit 6 cm) = <b>${durasiAcuan} minggu</b> →
+    durasi aktual = <b>${totalMinggu} minggu</b>
+    (${selisih>=0?'+':''}${selisih} minggu / ${selisihHari>=0?'+':''}${selisihHari} hari).
+  `;
+
+  /* ---- Ringkasan ---- */
+  const ekorTebar = d.padat * volume;
+  const ekorPanen = Math.round(ekorTebar * d.sr/100);
+  const biomassaPanen = (ekorPanen * d.bobot) / 1000;
+  const s = SISTEM_LABEL[sistem];
+  const [bLo,bHi] = rentangBobot(d.bobot);
+  const [pLo,pHi] = rentangPanjang(d.bobot);
+
+  $('summary').innerHTML = `
+    <div class="stat"><div class="lbl">Varian</div><div class="val" style="color:#e2e8f0">${varian}</div></div>
+    <div class="stat"><div class="lbl">Sistem</div><div class="val" style="font-size:.9rem;color:#e2e8f0"><span class="badge ${s.cls}">${s.label}</span></div></div>
+    <div class="stat"><div class="lbl">Volume</div><div class="val">${fmt(volume,0)} <small>m³</small></div></div>
+    <div class="stat highlight"><div class="lbl">Bibit Awal</div><div class="val">${bibitCm} <small>cm</small></div></div>
+    <div class="stat highlight"><div class="lbl">Bobot Tebar</div><div class="val">${fmt(wTebar,1)} <small>g</small></div></div>
+    <div class="stat"><div class="lbl">Padat Tebar</div><div class="val">${fmt(d.padat,0)} <small>ekor/m³</small></div></div>
+    <div class="stat"><div class="lbl">Total Tebar</div><div class="val">${fmt(ekorTebar,0)} <small>ekor</small></div></div>
+    <div class="stat"><div class="lbl">SR Final</div><div class="val">${d.sr}%</div></div>
+    <div class="stat"><div class="lbl">Ekor Panen</div><div class="val">${fmt(ekorPanen,0)} <small>ekor</small></div></div>
+    <div class="stat"><div class="lbl">Bobot Panen</div><div class="val" style="font-size:1rem">${fmt(bLo,0)}–${fmt(bHi,0)} <small>g</small></div></div>
+    <div class="stat"><div class="lbl">Panjang Panen</div><div class="val" style="font-size:1rem">${fmt(pLo,0)}–${fmt(pHi,0)} <small>cm</small></div></div>
+    <div class="stat"><div class="lbl">Biomassa Panen</div><div class="val">${fmt(biomassaPanen,1)} <small>kg</small></div></div>
+    <div class="stat highlight"><div class="lbl">Durasi Aktual</div><div class="val">${totalMinggu} <small>minggu</small></div></div>
+  `;
+
+  /* ---- Tabel pertumbuhan ---- */
+  const bobotMax = Math.max(...fase);
+  let rows = '';
+  for(let m=0; m<=totalMinggu; m++){
+    const bobot = fase[m];
+    const ekor  = ekorArr[m];
+    const biomassa = (ekor * bobot) / 1000;
+    const pct = (bobot / bobotMax) * 100;
+    const isHarvest = (m === totalMinggu);
+    const isStocking = (m === 0);
+
+    const [bLoM,bHiM] = rentangBobot(bobot);
+    const [pLoM,pHiM] = rentangPanjang(bobot);
+
+    rows += `
+      <tr class="${isHarvest?'harvest-row':''} ${isStocking?'stocking-row':''}">
+        <td>${isStocking?'0 (tebar)':m}${isHarvest?' 🏁':''}</td>
+        <td>${fmt(ekor,0)}</td>
+        <td class="range">${fmt(bLoM,0)}–${fmt(bHiM,0)} <small>g</small></td>
+        <td class="range">${fmt(pLoM,1)}–${fmt(pHiM,1)} <small>cm</small></td>
+        <td>${fmt(biomassa,1)}</td>
+        <td class="bar-cell"><div class="bar"><div style="width:${pct}%"></div></div></td>
+      </tr>
+    `;
+  }
+  $('tbody').innerHTML = rows;
+}
+
+/* ---------- Event ---------- */
+['varian','sistem','volume','bibit'].forEach(id=>{
+  $(id).addEventListener('input', render);
+  $(id).addEventListener('change', render);
+});
+
+/* init */
+render();
+</script>
+</body>
+</html>
