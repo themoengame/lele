@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulasi Budidaya Nila — Strain × Sistem × Volume × Ukuran Bibit</title>
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --card2:#273449; --border:#334155;
+    --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --accent2:#22c55e;
+    --warn:#f59e0b; --purple:#a78bfa; --teal:#2dd4bf;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:linear-gradient(160deg,#0f172a 0%,#1a2740 100%);
+    color:var(--text); min-height:100vh; padding:24px 16px 60px;
+  }
+  .wrap{max-width:1320px; margin:0 auto;}
+  header{text-align:center; margin-bottom:28px;}
+  header h1{font-size:1.7rem; font-weight:700; letter-spacing:.3px;}
+  header h1 span{color:var(--teal);}
+  header p{color:var(--muted); margin-top:8px; font-size:.92rem;}
+
+  .panel{
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; padding:20px; margin-bottom:20px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);
+  }
+  .panel h2{
+    font-size:1.05rem; margin-bottom:16px; color:var(--teal);
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel h2::before{content:''; width:4px; height:18px; background:var(--teal); border-radius:2px;}
+
+  .controls{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px;}
+  .control label{display:block; font-size:.8rem; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px;}
+  .control select, .control input[type=number]{
+    width:100%; padding:11px 12px; border-radius:10px;
+    background:var(--card2); color:var(--text);
+    border:1px solid var(--border); font-size:.95rem; outline:none;
+    transition:.2s;
+  }
+  .control select:focus, .control input:focus{border-color:var(--teal); box-shadow:0 0 0 3px rgba(45,212,191,.15);}
+  .control input.invalid{border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.18);}
+  .control .hint{font-size:.7rem; color:var(--muted); margin-top:4px; font-style:italic;}
+  .control .hint.err{color:#f87171; font-style:normal; font-weight:600;}
+
+  .slider-wrap{display:flex; align-items:center; gap:10px;}
+  .slider-wrap input[type=range]{flex:1; accent-color:var(--teal); height:6px;}
+  .slider-val{
+    min-width:58px; text-align:center; padding:6px 8px;
+    background:var(--card2); border:1px solid var(--border);
+    border-radius:8px; font-weight:700; color:var(--teal); font-size:.9rem;
+  }
+
+  .summary{display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px;}
+  .stat{
+    background:var(--card2); border:1px solid var(--border);
+    border-radius:12px; padding:14px 16px;
+  }
+  .stat .lbl{font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.6px;}
+  .stat .val{font-size:1.15rem; font-weight:700; margin-top:6px; color:var(--accent2);}
+  .stat .val small{font-size:.7rem; font-weight:400; color:var(--muted);}
+  .stat.highlight{border-color:var(--purple);}
+  .stat.highlight .val{color:var(--purple);}
+
+  table{width:100%; border-collapse:collapse; font-size:.85rem;}
+  thead th{
+    background:var(--card2); color:var(--muted); font-weight:600;
+    text-align:left; padding:10px 12px; font-size:.72rem;
+    text-transform:uppercase; letter-spacing:.5px;
+    border-bottom:2px solid var(--border); position:sticky; top:0;
+  }
+  tbody td{padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  tbody tr:hover{background:rgba(45,212,191,.06);}
+  tbody tr.harvest-row{background:rgba(34,197,94,.12); font-weight:600;}
+  tbody tr.harvest-row td{color:var(--accent2);}
+  tbody tr.stocking-row td{color:var(--purple);}
+  .bar-cell{width:24%; min-width:110px;}
+  .bar{height:9px; border-radius:5px; background:var(--border); overflow:hidden;}
+  .bar > div{height:100%; border-radius:5px; background:linear-gradient(90deg,#2dd4bf,#22c55e); transition:width .35s;}
+  .range{color:var(--teal); font-weight:600;}
+  .range small{color:var(--muted); font-weight:400;}
+
+  .badge{display:inline-block; padding:3px 9px; border-radius:20px; font-size:.7rem; font-weight:600;}
+  .badge.bio{background:rgba(56,189,248,.18); color:#7dd3fc;}
+  .badge.semi{background:rgba(245,158,11,.18); color:#fcd34d;}
+  .badge.konv{background:rgba(148,163,184,.18); color:#cbd5e1;}
+  .badge.tambak{background:rgba(139,92,246,.18); color:#c4b5fd;}
+
+  .info-box{
+    background:rgba(45,212,191,.1); border:1px solid rgba(45,212,191,.3);
+    border-radius:10px; padding:12px 16px; margin-top:12px;
+    font-size:.82rem; color:#ccfbf1; line-height:1.6;
+  }
+  .info-box b{color:#5eead4;}
+
+  .note{font-size:.78rem; color:var(--muted); margin-top:14px; line-height:1.7;}
+  .note b{color:var(--warn);}
+  .note code{background:var(--card2); padding:1px 6px; border-radius:4px; font-size:.75rem; color:#7dd3fc;}
+
+  .strain-desc{font-size:.75rem; color:var(--muted); margin-top:8px; line-height:1.6; padding:10px 14px; background:var(--card2); border-radius:8px; border-left:3px solid var(--teal);}
+
+  @media(max-width:760px){
+    header h1{font-size:1.3rem;}
+    .panel{padding:16px;}
+    table{font-size:.78rem;}
+    thead th, tbody td{padding:8px 6px;}
+    .bar-cell{display:none;}
+    thead th.bar-cell{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Simulasi Budidaya <span>Nila</span></h1>
+    <p>Strain Nila Konsumsi × Sistem Budidaya × Volume (desimal) × Ukuran Bibit Awal</p>
+  </header>
+
+  <!-- KONTROL -->
+  <section class="panel">
+    <h2>Parameter Budidaya</h2>
+    <div class="controls">
+      <div class="control">
+        <label for="strain">Strain Nila</label>
+        <select id="strain">
+          <option value="Nirwana">Nila Nirwana</option>
+          <option value="Gesit">Nila Gesit</option>
+          <option value="BEST">Nila BEST</option>
+          <option value="Larasati">Nila Larasati</option>
+          <option value="GIFT">Nila GIFT</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="sistem">Sistem Budidaya</label>
+        <select id="sistem">
+          <option value="Bioflok">Bioflok Intensif</option>
+          <option value="Semi">Semi-Intensif</option>
+          <option value="Konvensional">Konvensional Air Tenang</option>
+          <option value="Tambak">Tambak Air Payau</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="volume">Volume Air (m³)</label>
+        <input id="volume" type="number" min="0.01" max="1000" step="0.01" value="1">
+        <div class="hint" id="volumeHint">Minimal 0,01 m³ — desimal didukung (mis. 0,05 / 0,25 / 0,5)</div>
+      </div>
+      <div class="control">
+        <label for="bibit">Ukuran Bibit Awal (cm)</label>
+        <div class="slider-wrap">
+          <input id="bibit" type="range" min="3" max="12" step="0.5" value="7">
+          <span class="slider-val" id="bibitVal">7 cm</span>
+        </div>
+        <div class="hint">Bibit kecil → durasi lebih lama; bibit besar → durasi lebih singkat</div>
+      </div>
+    </div>
+
+    <div class="info-box" id="infoBibit"></div>
+    <div class="strain-desc" id="strainDesc"></div>
+  </section>
+
+  <!-- RINGKASAN -->
+  <section class="panel">
+    <h2>Ringkasan Parameter</h2>
+    <div class="summary" id="summary"></div>
+  </section>
+
+  <!-- TABEL PERTUMBUHAN -->
+  <section class="panel">
+    <h2>Simulasi Pertumbuhan Mingguan</h2>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Minggu</th>
+            <th>Ekor Hidup</th>
+            <th>Bobot / Ekor (g)</th>
+            <th>Panjang Tubuh (cm)</th>
+            <th>Biomassa (kg)</th>
+            <th class="bar-cell">Progres</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <p class="note">
+      <b>Catatan:</b> Volume air dapat diisi desimal hingga <b>0,01 m³</b> (10 liter). Semua perhitungan — total tebar,
+      ekor hidup, dan biomassa — diskalakan proporsional terhadap volume. Durasi dasar tiap kombinasi strain×sistem
+      dihitung pada acuan bibit <b>7 cm</b>. Setiap penambahan 1 cm bibit mempersingkat durasi ±0,4 minggu; setiap
+      pengurangan 1 cm memperpanjang serupa. Bobot tebar diestimasi dengan <code>W ≈ (L / 4,8)^3</code>.
+      Rentang bobot normal ±12% dan panjang ±8% dari nilai tengah kurva logistik. Panen nila umumnya pada bobot
+      200–350 g/ekor sesuai permintaan pasar konsumsi.
+    </p>
+  </section>
+
+</div>
+
+<script>
+/* ============================================================
+   DATA DASAR — STRAIN NILA KONSUMSI × SISTEM (per 1 m³)
+   Acuan bibit 7 cm. Durasi & kurva fase dalam MINGGU.
+   ============================================================ */
+const DATA = {
+  Nirwana: {
+    Bioflok:       { padat:100, sr:90, bobot:300, fase:[3,5,9,15,24,36,50,66,84,104,126,148,170,192,214,236,258,280,300] },
+    Semi:          { padat:50,  sr:88, bobot:300, fase:[3,5,8,13,20,30,42,56,72,90,110,130,150,170,190,210,230,250,270,285,300] },
+    Konvensional:  { padat:25,  sr:85, bobot:280, fase:[3,4,7,11,17,25,35,47,61,77,94,112,130,148,166,184,202,218,234,248,260,270,276,280] },
+    Tambak:        { padat:30,  sr:82, bobot:280, fase:[3,4,7,11,17,25,35,47,61,77,94,112,130,148,166,184,202,218,234,248,260,270,280] }
+  },
+  Gesit: {
+    Bioflok:       { padat:120, sr:92, bobot:300, fase:[3,6,11,19,30,44,60,78,98,118,140,162,184,206,228,250,300] },
+    Semi:          { padat:60,  sr:90, bobot:300, fase:[3,5,9,15,24,36,50,66,84,104,126,148,170,192,214,236,258,280,300] },
+    Konvensional:  { padat:30,  sr:87, bobot:280, fase:[3,4,8,13,20,29,40,53,68,85,103,122,141,160,179,198,217,234,250,264,274,280] },
+    Tambak:        { padat:35,  sr:85, bobot:280, fase:[3,5,9,15,24,36,50,66,84,104,126,148,170,192,214,236,258,280] }
+  },
+  BEST: {
+    Bioflok:       { padat:110, sr:90, bobot:300, fase:[3,6,10,17,27,40,55,72,91,112,134,156,178,200,222,244,266,300] },
+    Semi:          { padat:55,  sr:88, bobot:300, fase:[3,5,9,14,22,33,46,61,78,97,118,140,162,184,206,228,250,272,300] },
+    Konvensional:  { padat:28,  sr:85, bobot:280, fase:[3,4,7,12,18,27,37,49,63,79,96,114,132,150,168,186,204,220,236,250,262,272,280] },
+    Tambak:        { padat:32,  sr:83, bobot:280, fase:[3,4,8,13,20,30,42,56,72,90,110,130,150,170,190,210,230,250,270,280] }
+  },
+  Larasati: {
+    Bioflok:       { padat:100, sr:88, bobot:280, fase:[3,5,9,15,24,36,50,66,84,102,122,142,162,182,202,222,242,262,280] },
+    Semi:          { padat:50,  sr:86, bobot:280, fase:[3,5,8,13,20,30,42,56,72,90,108,128,148,168,188,208,228,248,268,280] },
+    Konvensional:  { padat:25,  sr:83, bobot:260, fase:[3,4,7,11,17,25,35,47,61,77,94,111,128,145,162,179,196,213,228,242,254,264,270,260] },
+    Tambak:        { padat:30,  sr:80, bobot:260, fase:[3,4,7,11,17,25,35,47,61,77,94,111,128,145,162,179,196,213,228,242,254,260] }
+  },
+  GIFT: {
+    Bioflok:       { padat:105, sr:89, bobot:300, fase:[3,5,10,17,26,38,52,68,86,106,128,150,172,194,216,238,260,300] },
+    Semi:          { padat:52,  sr:87, bobot:300, fase:[3,5,8,14,22,32,44,58,74,92,112,132,152,172,192,212,232,252,300] },
+    Konvensional:  { padat:26,  sr:84, bobot:280, fase:[3,4,7,11,17,26,36,48,62,78,95,112,130,148,166,184,202,218,234,248,260,270,280] },
+    Tambak:        { padat:30,  sr:81, bobot:280, fase:[3,4,8,13,20,29,40,53,68,85,104,124,144,164,184,204,224,244,264,280] }
+  }
+};
+
+const STRAIN_INFO = {
+  Nirwana: 'Nila Nirwana (Nila Ras Wanayasa) — pertumbuhan paling cepat di antara strain nila, banyak digunakan untuk konsumsi dan industri fillet.',
+  Gesit:   'Nila Gesit (Genetically Supermale Indonesian Tilapia) — 96% benih berkelamin jantan, pertumbuhan lebih cepat dan seragam.',
+  BEST:    'Nila BEST (Bogor Enhanced Strain Tilapia) — hasil perbaikan nila GIFT generasi keenam, pertumbuhan unggul.',
+  Larasati:'Nila Larasati (nila merah Janti) — daging lebih banyak, pertumbuhan cepat, tahan penyakit.',
+  GIFT:    'Nila GIFT (Genetic Improvement of Farmed Tilapia) — pertumbuhan cepat, banyak dibudidayakan secara komersial.'
+};
+
+const SISTEM_LABEL = {
+  Bioflok:      {label:'Bioflok Intensif',          cls:'bio'},
+  Semi:         {label:'Semi-Intensif',             cls:'semi'},
+  Konvensional: {label:'Konvensional Air Tenang',   cls:'konv'},
+  Tambak:       {label:'Tambak Air Payau',          cls:'tambak'}
+};
+
+/* ---------- Helper ---------- */
+const $ = id => document.getElementById(id);
+const fmt = (n, d=1) => n.toLocaleString('id-ID', {minimumFractionDigits:d, maximumFractionDigits:d});
+
+/* Format volume: tampilkan desimal bila < 1, bulat bila >= 1 */
+function fmtVolume(v){
+  if (v < 1) return v.toLocaleString('id-ID', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return v.toLocaleString('id-ID', {minimumFractionDigits:0, maximumFractionDigits:2});
+}
+
+/* Panjang (cm) → bobot (g) untuk nila: W = (L/4.8)^3 */
+function bobotDariPanjangNila(L){
+  return Math.pow(L/4.8, 3);
+}
+function panjangDariBobotNila(w){
+  return 4.8 * Math.pow(w, 0.33);
+}
+function rentangBobot(tengah){
+  return [Math.max(0.1, tengah*0.88), tengah*1.12];
+}
+function rentangPanjang(wTengah){
+  const L = panjangDariBobotNila(wTengah);
+  return [L*0.92, L*1.08];
+}
+
+/* ============================================================
+   INTERPOLASI KURVA — sesuaikan terhadap ukuran bibit
+   Acuan bibit: 7 cm
+   ============================================================ */
+function sesuaikanKurva(faseAcuan, bibitCm){
+  const bibitAcuanCm = 7;
+  const wTebarAcuan = faseAcuan[0];
+  const wPanen      = faseAcuan[faseAcuan.length-1];
+  const durasiAcuan = faseAcuan.length - 1;
+
+  const wTebarAktual = bobotDariPanjangNila(bibitCm);
+
+  const deltaCm = bibitCm - bibitAcuanCm;
+  const deltaMinggu = -deltaCm * 0.4;
+  let durasiAktual = Math.round(durasiAcuan + deltaMinggu);
+  durasiAktual = Math.max(6, Math.min(durasiAktual, durasiAcuan + 6));
+
+  const norm = faseAcuan.map(w => (w - wTebarAcuan) / (wPanen - wTebarAcuan));
+
+  const hasil = [];
+  for(let m=0; m<=durasiAktual; m++){
+    const t = m / durasiAktual;
+    const tAcuan = t * durasiAcuan;
+    const i0 = Math.floor(tAcuan);
+    const i1 = Math.min(i0+1, norm.length-1);
+    const frac = tAcuan - i0;
+    const nVal = norm[i0]*(1-frac) + norm[i1]*frac;
+    const w = wTebarAktual + nVal * (wPanen - wTebarAktual);
+    hasil.push(w);
+  }
+  hasil[0] = wTebarAktual;
+  hasil[hasil.length-1] = wPanen;
+  return { fase: hasil, durasi: durasiAktual, wTebar: wTebarAktual };
+}
+
+function hitungEkorMingguan(padat, srFinal, totalMinggu, volume){
+  const ekorAwal  = padat * volume;
+  const ekorAkhir = ekorAwal * (srFinal/100);
+  const matiTotal = ekorAwal - ekorAkhir;
+  const arr = [];
+  for(let m=0; m<=totalMinggu; m++){
+    arr.push(ekorAwal - matiTotal*(m/totalMinggu));
+  }
+  return arr;
+}
+
+/* ---------- Validasi volume ---------- */
+function bacaVolume(){
+  const el = $('volume');
+  let v = parseFloat(el.value);
+  const hint = $('volumeHint');
+
+  if (isNaN(v) || v < 0.01){
+    el.classList.add('invalid');
+    hint.classList.add('err');
+    hint.textContent = '⚠ Volume minimal 0,01 m³ (10 liter). Nilai dipaksa ke 0,01.';
+    v = 0.01;
+    el.value = 0.01;
+  } else if (v > 1000){
+    el.classList.add('invalid');
+    hint.classList.add('err');
+    hint.textContent = '⚠ Volume maksimal 1.000 m³. Nilai dipaksa ke 1.000.';
+    v = 1000;
+    el.value = 1000;
+  } else {
+    el.classList.remove('invalid');
+    hint.classList.remove('err');
+    hint.textContent = 'Minimal 0,01 m³ — desimal didukung (mis. 0,05 / 0,25 / 0,5)';
+  }
+  return v;
+}
+
+/* ---------- Render ---------- */
+function render(){
+  const strain  = $('strain').value;
+  const sistem  = $('sistem').value;
+  const volume  = bacaVolume();
+  const bibitCm = parseFloat($('bibit').value);
+
+  $('bibitVal').textContent = bibitCm + ' cm';
+  $('strainDesc').textContent = STRAIN_INFO[strain];
+
+  const d = DATA[strain][sistem];
+  const kurva = sesuaikanKurva(d.fase, bibitCm);
+  const fase = kurva.fase;
+  const totalMinggu = kurva.durasi;
+  const wTebar = kurva.wTebar;
+
+  const ekorArr = hitungEkorMingguan(d.padat, d.sr, totalMinggu, volume);
+
+  const durasiAcuan = d.fase.length - 1;
+  const selisih = totalMinggu - durasiAcuan;
+  const selisihHari = Math.round(selisih * 7);
+  $('infoBibit').innerHTML = `
+    Bibit <b>${bibitCm} cm</b> ≈ <b>${fmt(wTebar,2)} g/ekor</b>.
+    Durasi acuan (bibit 7 cm) = <b>${durasiAcuan} minggu</b> →
+    durasi aktual = <b>${totalMinggu} minggu</b>
+    (${selisih>=0?'+':''}${selisih} minggu / ${selisihHari>=0?'+':''}${selisihHari} hari).
+  `;
+
+  const ekorTebar = d.padat * volume;
+  const ekorPanen = ekorTebar * d.sr/100;
+  const biomassaPanen = (ekorPanen * d.bobot) / 1000;
+  const s = SISTEM_LABEL[sistem];
+  const [bLo,bHi] = rentangBobot(d.bobot);
+  const [pLo,pHi] = rentangPanjang(d.bobot);
+
+  $('summary').innerHTML = `
+    <div class="stat"><div class="lbl">Strain</div><div class="val" style="color:#e2e8f0">${strain}</div></div>
+    <div class="stat"><div class="lbl">Sistem</div><div class="val" style="font-size:.9rem;color:#e2e8f0"><span class="badge ${s.cls}">${s.label}</span></div></div>
+    <div class="stat highlight"><div class="lbl">Volume Air</div><div class="val">${fmtVolume(volume)} <small>m³</small></div></div>
+    <div class="stat highlight"><div class="lbl">Bibit Awal</div><div class="val">${bibitCm} <small>cm</small></div></div>
+    <div class="stat highlight"><div class="lbl">Bobot Tebar</div><div class="val">${fmt(wTebar,2)} <small>g</small></div></div>
+    <div class="stat"><div class="lbl">Padat Tebar</div><div class="val">${fmt(d.padat,0)} <small>ekor/m³</small></div></div>
+    <div class="stat"><div class="lbl">Total Tebar</div><div class="val">${fmt(ekorTebar,0)} <small>ekor</small></div></div>
+    <div class="stat"><div class="lbl">SR Final</div><div class="val">${d.sr}%</div></div>
+    <div class="stat"><div class="lbl">Ekor Panen</div><div class="val">${fmt(ekorPanen,0)} <small>ekor</small></div></div>
+    <div class="stat"><div class="lbl">Bobot Panen</div><div class="val" style="font-size:1rem">${fmt(bLo,0)}–${fmt(bHi,0)} <small>g</small></div></div>
+    <div class="stat"><div class="lbl">Panjang Panen</div><div class="val" style="font-size:1rem">${fmt(pLo,0)}–${fmt(pHi,0)} <small>cm</small></div></div>
+    <div class="stat"><div class="lbl">Biomassa Panen</div><div class="val">${fmt(biomassaPanen,2)} <small>kg</small></div></div>
+    <div class="stat highlight"><div class="lbl">Durasi Aktual</div><div class="val">${totalMinggu} <small>minggu</small></div></div>
+  `;
+
+  const bobotMax = Math.max(...fase);
+  let rows = '';
+  for(let m=0; m<=totalMinggu; m++){
+    const bobot = fase[m];
+    const ekor  = ekorArr[m];
+    const biomassa = (ekor * bobot) / 1000;
+    const pct = (bobot / bobotMax) * 100;
+    const isHarvest = (m === totalMinggu);
+    const isStocking = (m === 0);
+
+    const [bLoM,bHiM] = rentangBobot(bobot);
+    const [pLoM,pHiM] = rentangPanjang(bobot);
+
+    rows += `
+      <tr class="${isHarvest?'harvest-row':''} ${isStocking?'stocking-row':''}">
+        <td>${isStocking?'0 (tebar)':m}${isHarvest?' 🏁':''}</td>
+        <td>${fmt(ekor, ekor < 10 ? 2 : 0)}</td>
+        <td class="range">${fmt(bLoM,1)}–${fmt(bHiM,1)} <small>g</small></td>
+        <td class="range">${fmt(pLoM,1)}–${fmt(pHiM,1)} <small>cm</small></td>
+        <td>${fmt(biomassa, biomassa < 10 ? 3 : 2)}</td>
+        <td class="bar-cell"><div class="bar"><div style="width:${pct}%"></div></div></td>
+      </tr>
+    `;
+  }
+  $('tbody').innerHTML = rows;
+}
+
+['strain','sistem','volume','bibit'].forEach(id=>{
+  $(id).addEventListener('input', render);
+  $(id).addEventListener('change', render);
+});
+
+render();
+</script>
+</body>
+</html>
